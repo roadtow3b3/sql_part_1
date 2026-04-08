@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="merklelearn_logo.png" alt="Merklelearn logo" width="260" />
+  <img src="./merklelearn_logo.png" alt="Merklelearn logo" width="260" />
   <h1>SQL Стрим 1</h1>
 </div>
 
