@@ -1,0 +1,218 @@
+SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE table_schema IN ('core','sales','hr','analytics');
+
+
+SELECT *
+FROM core.customers
+LIMIT 10;
+
+SELECT *
+FROM (
+    SELECT *
+    FROM core.customers
+    WHERE first_name LIKE 'Name1%'
+) t;
+
+
+SELECT o.order_id, c.first_name, o.order_status
+FROM sales.orders o
+JOIN core.customers c ON o.customer_id = c.customer_id
+LIMIT 20;
+
+SELECT *
+FROM sales.orders
+CROSS JOIN core.products
+LIMIT 5;
+
+SELECT c.customer_id, o.order_id
+FROM core.customers c
+LEFT JOIN sales.orders o ON c.customer_id = o.customer_id
+WHERE o.order_id IS NULL
+LIMIT 20;
+
+SELECT c.customer_id, o.order_id
+FROM core.customers c
+FULL JOIN sales.orders o ON c.customer_id = o.customer_id
+LIMIT 20;
+
+SELECT e.employee_id, e.first_name, m.first_name
+FROM hr.employees e
+LEFT JOIN hr.employees m ON e.manager_id = m.employee_id
+LIMIT 20;
+
+
+SELECT *
+FROM sales.orders
+WHERE order_status = 'delivered'
+LIMIT 20;
+
+SELECT *
+FROM sales.orders
+WHERE discount_amount > 20;
+
+SELECT customer_id, COUNT(*)
+FROM sales.orders
+GROUP BY customer_id
+HAVING COUNT(*) > 5;
+
+SELECT *
+FROM sales.orders o
+JOIN core.customers c ON o.customer_id = c.customer_id
+WHERE c.country_code = 'UK';
+
+SELECT *
+FROM sales.orders o
+JOIN core.customers c
+  ON o.customer_id = c.customer_id
+ AND c.country_code = 'UK';
+
+
+SELECT country_code, COUNT(*)
+FROM core.customers
+GROUP BY country_code;
+
+SELECT category_id, COUNT(*)
+FROM core.products
+GROUP BY category_id;
+
+SELECT c.country_code, ci.city_name, COUNT(*)
+FROM core.customers c
+JOIN core.cities ci ON c.city_id = ci.city_id
+GROUP BY c.country_code, ci.city_name;
+
+
+SELECT country_code, COUNT(*)
+FROM core.customers
+GROUP BY country_code
+HAVING COUNT(*) > 300;
+
+SELECT COUNT(*)
+FROM sales.orders
+HAVING COUNT(*) > 1000;
+
+
+SELECT order_id,
+       discount_amount,
+       discount_amount * 2 AS double_discount
+FROM sales.orders
+LIMIT 10;
+
+
+SELECT employee_id, salary
+FROM hr.employees
+ORDER BY salary DESC
+LIMIT 10;
+
+SELECT employee_id, salary
+FROM hr.employees
+ORDER BY salary DESC
+LIMIT 5 OFFSET 5;
+
+
+CREATE TABLE analytics.tmp_demo(id INT);
+
+ALTER TABLE analytics.tmp_demo
+ADD COLUMN name TEXT;
+
+TRUNCATE TABLE analytics.tmp_demo;
+
+DROP TABLE analytics.tmp_demo;
+
+
+INSERT INTO core.categories(category_name)
+VALUES ('Demo category');
+
+UPDATE core.products
+SET base_price = base_price * 1.01
+WHERE product_id < 10;
+
+DELETE FROM sales.returns
+WHERE return_id < 5;
+
+
+CREATE ROLE demo_user LOGIN PASSWORD 'demo123';
+
+GRANT SELECT ON ALL TABLES IN SCHEMA core TO demo_user;
+
+REVOKE ALL ON ALL TABLES IN SCHEMA audit FROM demo_user;
+
+
+BEGIN;
+
+UPDATE hr.employees
+SET salary = salary * 1.1
+WHERE employee_id = 1;
+
+ROLLBACK;
+
+
+DELETE FROM analytics.mv_daily_sales;
+
+TRUNCATE TABLE analytics.mv_daily_sales;
+
+
+SELECT customer_id, profile
+FROM core.customers
+LIMIT 5;
+
+SELECT customer_id, tags
+FROM core.customers
+WHERE tags @> ARRAY['vip']::TEXT[];
+
+
+SELECT employee_id,
+       salary,
+       ROW_NUMBER() OVER (ORDER BY salary DESC),
+       RANK() OVER (ORDER BY salary DESC)
+FROM hr.employees
+LIMIT 20;
+
+
+SELECT *
+FROM core.products
+WHERE product_id IN (
+    SELECT product_id
+    FROM sales.order_items
+    WHERE quantity >= 3
+);
+
+
+WITH t AS (
+    SELECT customer_id, COUNT(*) AS cnt
+    FROM sales.orders
+    GROUP BY customer_id
+)
+SELECT *
+FROM t
+WHERE cnt > 5;
+
+
+SELECT *
+FROM analytics.v_order_totals
+LIMIT 10;
+
+
+SELECT sales.calculate_order_total(1);
+
+SELECT analytics.customer_ltv(
+    (SELECT customer_id FROM core.customers LIMIT 1)
+);
+
+
+UPDATE sales.orders
+SET order_status = 'shipped'
+WHERE order_id = 1;
+
+SELECT *
+FROM audit.order_status_log
+ORDER BY changed_at DESC
+LIMIT 5;
+
+
+EXPLAIN ANALYZE
+SELECT *
+FROM sales.orders
+WHERE order_status = 'delivered'
+ORDER BY order_date DESC
+LIMIT 50;
